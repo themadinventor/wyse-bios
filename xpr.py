@@ -6,6 +6,7 @@ import struct
 import sys
 import os
 import re
+import time
 
 class XRFragment:
 
@@ -65,6 +66,9 @@ class XRFragment:
         f.write(self.data)
         f.write('\0'*(self.padsize-32-self.imsize))
 
+    def splice(self, data, offset):
+        self.data = self.data[:offset] + data + self.data[offset+len(data):]
+
 class XRBIOS:
 
 	def __init__(self):
@@ -95,11 +99,17 @@ class XRBIOS:
 			raise Exception('Overflowing ROM')
 		print 'Padding:\t%6d' % padsize
 
+                self.tag()
+
 		f = file(fname, 'wb')
                 XRFragment().padding(padsize).write(f)
 
 		for im in self.images:
                     im.write(f)
+
+        def tag(self):
+            tag = '%s@%s %s' % (os.environ['USER'], os.uname()[1], time.asctime())
+            self.images[-1].splice(tag, 0)
 	
 	def read(self, fname):
 		self.images = []
